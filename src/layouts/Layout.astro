@@ -1,3 +1,31 @@
 ---
 import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = 'RealGolf.Games Database',
+	description = 'Monthly public RealGolf.Games data dumps in GGN format.',
+} = Astro.props;
 ---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/logo.png" />
+		<link rel="icon" href="/logo.png" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta name="theme-color" content="#0d1117" />
+		<title>{title}</title>
+	</head>
+	<body>
+		<main class="page">
+			<slot />
+		</main>
+	</body>
+</html>

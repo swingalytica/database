@@ -9,11 +9,14 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "dump:publish": "node ./scripts/publish-monthly-dump.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.103.0",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^6.1.6",
+    "mongodb": "7.1.1",
     "tailwindcss": "^4.2.2"
   }
 }
