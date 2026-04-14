@@ -225,7 +225,8 @@ function calculateDurationInSeconds(createdAt, updatedAt) {
 
 function renderGame(game) {
   const gameId = assertString(pick(game, ["id", "_id"]), "id");
-  const game_mode = assertString(pick(game, ["game_mode"]), "game_mode");
+  // Prefer the canonical field name "game_mode" (accept camelCase fallback)
+  const game_mode = assertString(pick(game, ["game_mode", "gameMode"]), "game_mode");
   const createdAt = normalizeDate(pick(game, ["created_at", "createdAt"]), "created_at");
   const updatedAt = normalizeDate(
     pick(game, ["updated_at", "updatedAt", "created_at", "createdAt"]),
