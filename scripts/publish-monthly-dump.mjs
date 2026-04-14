@@ -47,6 +47,20 @@ function assertString(value, label) {
 		return String(value);
 	}
 
+	if (value && typeof value === 'object') {
+		if (typeof value.toHexString === 'function') {
+			return value.toHexString();
+		}
+
+		if (typeof value.toString === 'function') {
+			const stringValue = value.toString();
+
+			if (stringValue && stringValue !== '[object Object]') {
+				return stringValue;
+			}
+		}
+	}
+
 	throw new Error(`Missing required string field: ${label}`);
 }
 
@@ -83,15 +97,19 @@ function formatOptionalValue(value) {
 		return '-';
 	}
 
-	return String(value);
+	return assertString(value, 'optional');
 }
 
 function formatPlayerData(value) {
+	if (typeof value === 'string' && value.length > 0) {
+		return value;
+	}
+
 	if (!Array.isArray(value) || value.length === 0) {
 		return '-';
 	}
 
-	return value.map((entry) => String(entry)).join(',');
+	return value.map((entry) => assertString(entry, 'player.data')).join(',');
 }
 
 function normalizePlayers(game) {
@@ -120,7 +138,7 @@ function normalizeWinner(game, players) {
 
 	const flaggedWinner = players.find((player) =>
 		[pick(player, ['winner', 'is_winner', 'isWinner']), pick(player, ['result', 'placement'])].some(
-			(value) => value === true || value === 'winner' || value === 1,
+			(value) => value === true || value === 'winner' || value === 1 || value === '1',
 		),
 	);
 
