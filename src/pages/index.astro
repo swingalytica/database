@@ -65,7 +65,7 @@ import Layout from '../layouts/Layout.astro';
 		}
 	}
 
-	function formatMegabytes(sizeInBytes) {
+	function formatBytesAsMB(sizeInBytes) {
 		if (!Number.isFinite(sizeInBytes)) {
 			return 'Unknown size';
 		}
@@ -83,7 +83,7 @@ import Layout from '../layouts/Layout.astro';
 		const meta = document.createElement('span');
 		const sizeInBytes = file.metadata?.size ?? file.size;
 		meta.className = 'dump-list__meta';
-		meta.textContent = formatMegabytes(sizeInBytes);
+		meta.textContent = formatBytesAsMB(sizeInBytes);
 
 		const link = document.createElement('a');
 		link.href = downloadUrl;

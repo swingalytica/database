@@ -213,6 +213,10 @@ function renderBoard(game, mode) {
 	];
 }
 
+function calculateDurationInSeconds(createdAt, updatedAt) {
+	return Math.max(0, Math.floor((new Date(updatedAt).getTime() - new Date(createdAt).getTime()) / 1000));
+}
+
 function renderGame(game) {
 	const gameId = assertString(pick(game, ['id', '_id']), 'id');
 	const mode = assertString(pick(game, ['mode']), 'mode');
@@ -234,9 +238,7 @@ function renderGame(game) {
 	const movesCount =
 		pick(game, ['moves_count', 'movesCount']) ??
 		(Array.isArray(moves) ? moves.length : undefined);
-	const duration =
-		pick(game, ['duration']) ??
-		Math.max(0, Math.floor((new Date(updatedAt).getTime() - new Date(createdAt).getTime()) / 1000));
+	const duration = pick(game, ['duration']) ?? calculateDurationInSeconds(createdAt, updatedAt);
 
 	return [
 		formatTag('GGN', '1.0'),
