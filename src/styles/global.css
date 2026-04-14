@@ -1,1 +1,167 @@
-@import "tailwindcss";
+:root {
+	color-scheme: dark;
+	font-family:
+		Inter,
+		ui-sans-serif,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		sans-serif;
+	background: #0d1117;
+	color: #e6edf3;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+	background: #0d1117;
+	color: #e6edf3;
+}
+
+body {
+	line-height: 1.7;
+}
+
+a {
+	color: #7ee787;
+}
+
+a:hover {
+	color: #a2f2ae;
+}
+
+code {
+	font-family:
+		"SFMono-Regular",
+		Consolas,
+		"Liberation Mono",
+		Menlo,
+		monospace;
+	font-size: 0.95rem;
+}
+
+.page {
+	max-width: 52rem;
+	margin: 0 auto;
+	padding: 3rem 1.5rem 4rem;
+}
+
+.hero,
+.panel,
+.footer {
+	margin-bottom: 2rem;
+}
+
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.brand__logo {
+	flex: none;
+}
+
+.eyebrow {
+	margin: 0 0 0.25rem;
+	font-size: 0.8rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: #8b949e;
+}
+
+h1,
+h2,
+p,
+ul {
+	margin: 0;
+}
+
+h1 {
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.1;
+}
+
+h2 {
+	font-size: 1.15rem;
+}
+
+.lead,
+.panel p,
+.footer {
+	max-width: 44rem;
+}
+
+.lead,
+.panel p + p,
+.link-list,
+.dump-list {
+	margin-top: 1rem;
+}
+
+.panel {
+	padding-top: 1.25rem;
+	border-top: 1px solid #30363d;
+}
+
+.link-list,
+.dump-list {
+	padding-left: 1.2rem;
+}
+
+.section-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.status,
+.dump-list__meta,
+.footer {
+	color: #8b949e;
+}
+
+.dump-list__item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+}
+
+.dump-list__details {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.75rem;
+}
+
+.footer {
+	font-size: 0.95rem;
+	padding-top: 1.25rem;
+	border-top: 1px solid #30363d;
+}
+
+@media (max-width: 640px) {
+	.page {
+		padding: 2rem 1rem 3rem;
+	}
+
+	.brand {
+		align-items: flex-start;
+	}
+
+	.dump-list__item,
+	.dump-list__details {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

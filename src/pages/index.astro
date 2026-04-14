@@ -1,17 +1,139 @@
 ---
-
+import Layout from '../layouts/Layout.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout
+	title="RealGolf.Games Database"
+	description="Monthly GGN dumps of all public RealGolf.Games games."
+>
+	<header class="hero">
+		<div class="brand">
+			<img class="brand__logo" src="/favicon.svg" alt="RealGolf.Games logo" width="52" height="52" />
+			<div>
+				<p class="eyebrow">database.realgolf.games</p>
+				<h1>RealGolf.Games Database</h1>
+			</div>
+		</div>
+		<p class="lead">
+			This database publishes monthly GGN dumps of all public games played on
+			<a href="https://realgolf.games">RealGolf.Games</a>.
+		</p>
+	</header>
+
+	<section class="panel">
+		<p>
+			Each monthly file contains only the games created during that specific month.
+			Dumps are <strong>not cumulative</strong> — to build a full dataset, download every file listed below.
+		</p>
+		<p>
+			Data provided by <a href="https://realgolf.games">RealGolf.Games</a>, licensed under
+			<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+		</p>
+		<ul class="link-list">
+			<li><a href="https://github.com/swingalytica/ggn">GGN Specification</a></li>
+			<li><a href="https://npmjs.com/package/swingalytica">Official parser</a></li>
+		</ul>
+	</section>
+
+	<section class="panel">
+		<div class="section-heading">
+			<h2>Monthly dumps</h2>
+			<p class="status" data-status>Loading dump list…</p>
+		</div>
+		<noscript>
+			<p class="status">Enable JavaScript to fetch the current dump list from Supabase Storage.</p>
+		</noscript>
+		<ul class="dump-list" data-dump-list></ul>
+	</section>
+
+	<footer class="footer">
+		Data by RealGolf.Games UG (haftungsbeschränkt) · CC BY 4.0 · Format: GGN
+	</footer>
+</Layout>
+
+<script>
+	import { createClient } from '@supabase/supabase-js';
+
+	const status = document.querySelector('[data-status]');
+	const dumpList = document.querySelector('[data-dump-list]');
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+	function setStatus(message) {
+		if (status instanceof HTMLElement) {
+			status.textContent = message;
+		}
+	}
+
+	function formatMegabytes(sizeInBytes) {
+		if (!Number.isFinite(sizeInBytes)) {
+			return 'Unknown size';
+		}
+
+		return `${(sizeInBytes / 1024 / 1024).toFixed(2)} MB`;
+	}
+
+	function createDumpItem(file, downloadUrl) {
+		const item = document.createElement('li');
+		item.className = 'dump-list__item';
+
+		const name = document.createElement('code');
+		name.textContent = file.name;
+
+		const meta = document.createElement('span');
+		const sizeInBytes = file.metadata?.size ?? file.size;
+		meta.className = 'dump-list__meta';
+		meta.textContent = formatMegabytes(sizeInBytes);
+
+		const link = document.createElement('a');
+		link.href = downloadUrl;
+		link.textContent = 'Download';
+		link.setAttribute('download', file.name);
+
+		const details = document.createElement('div');
+		details.className = 'dump-list__details';
+		details.append(name, meta);
+
+		item.append(details, link);
+		return item;
+	}
+
+	async function loadDumps() {
+		if (!(dumpList instanceof HTMLUListElement) || !supabaseUrl || !supabaseAnonKey) {
+			setStatus('Supabase credentials are not configured.');
+			return;
+		}
+
+		const supabase = createClient(supabaseUrl, supabaseAnonKey);
+		const { data, error } = await supabase.storage.from('dumps').list('', {
+			limit: 1000,
+			sortBy: { column: 'name', order: 'desc' },
+		});
+
+		if (error) {
+			setStatus('Could not load dumps right now.');
+			return;
+		}
+
+		const files = (data ?? []).filter((file) => file.name && !file.name.endsWith('/'));
+
+		if (files.length === 0) {
+			setStatus('No dumps available yet.');
+			return;
+		}
+
+		for (const file of files) {
+			const {
+				data: { publicUrl },
+			} = supabase.storage.from('dumps').getPublicUrl(file.name);
+
+			dumpList.append(createDumpItem(file, publicUrl));
+		}
+
+		setStatus(`${files.length} file${files.length === 1 ? '' : 's'} available`);
+	}
+
+	loadDumps().catch(() => {
+		setStatus('Could not load dumps right now.');
+	});
+</script>
