@@ -223,15 +223,17 @@ function renderGame(game) {
 	);
 	const players = normalizePlayers(game);
 	const winner = normalizeWinner(game, players);
+	const moves = pick(game, ['moves']);
 	const totalShots =
 		pick(game, ['total_shots', 'totalShots']) ??
 		players.reduce((sum, player) => {
-			const shots = Number(pick(player, ['shots']));
+			const rawShots = pick(player, ['shots']);
+			const shots = rawShots === undefined || rawShots === null ? 0 : Number(rawShots);
 			return Number.isFinite(shots) ? sum + shots : sum;
 		}, 0);
 	const movesCount =
 		pick(game, ['moves_count', 'movesCount']) ??
-		(Array.isArray(pick(game, ['moves'])) ? pick(game, ['moves']).length : undefined);
+		(Array.isArray(moves) ? moves.length : undefined);
 	const duration =
 		pick(game, ['duration']) ??
 		Math.max(0, Math.floor((new Date(updatedAt).getTime() - new Date(createdAt).getTime()) / 1000));
@@ -308,7 +310,12 @@ async function createDumpFile(mongodbUri, outputPath) {
 		);
 
 		for await (const game of cursor) {
-			await writeLine(stream, JSON.stringify(renderGame(game)));
+			try {
+				await writeLine(stream, JSON.stringify(renderGame(game)));
+			} catch (error) {
+				const gameId = pick(game, ['id', '_id']) ?? 'unknown';
+				throw new Error(`Failed to serialize game ${gameId}: ${error.message}`, { cause: error });
+			}
 			count += 1;
 		}
 	} finally {
