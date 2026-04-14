@@ -92,6 +92,14 @@ function formatTag(key, value) {
   return `[${key} "${escapeTagValue(value)}"]`;
 }
 
+function formatOptionalNumberTag(key, value, label) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  return formatTag(key, assertNumber(value, label));
+}
+
 function formatOptionalValue(value) {
   if (value === undefined || value === null || value === "") {
     return "-";
@@ -193,10 +201,10 @@ function renderBoard(game, game_mode) {
     return [];
   }
 
-  const board = pick(game, ["board", "state.board", "grid"]);
+  const board = pick(game, ["game_board", "board", "state.board", "grid"]);
 
   if (!Array.isArray(board)) {
-    throw new Error(`Game ${pick(game, ["_id", "id"]) ?? "unknown"} is missing a board`);
+    return [];
   }
 
   return [
@@ -236,15 +244,17 @@ function renderGame(game) {
   const winner = normalizeWinner(game, players);
   const moves = pick(game, ["moves"]);
   const totalShots =
-    pick(game, ["total_shots", "totalShots"]) ??
+    pick(game, ["metadata.total_shots", "total_shots", "totalShots"]) ??
     players.reduce((sum, player) => {
       const rawShots = pick(player, ["shots"]);
       const shots = rawShots === undefined || rawShots === null ? 0 : Number(rawShots);
       return Number.isFinite(shots) ? sum + shots : sum;
     }, 0);
   const movesCount =
-    pick(game, ["moves_count", "movesCount"]) ?? (Array.isArray(moves) ? moves.length : undefined);
-  const duration = pick(game, ["duration"]) ?? calculateDurationInSeconds(createdAt, updatedAt);
+    pick(game, ["metadata.moves_count", "moves_count", "movesCount"]) ??
+    (Array.isArray(moves) ? moves.length : undefined);
+  const duration =
+    pick(game, ["metadata.duration", "duration"]) ?? calculateDurationInSeconds(createdAt, updatedAt);
 
   return [
     formatTag("GGN", "1.0"),
@@ -254,14 +264,20 @@ function renderGame(game) {
     formatTag("Updated", updatedAt),
     formatTag("URL", pick(game, ["url"]) ?? `${GAME_URL_PREFIX}${encodeURIComponent(gameId)}`),
     formatTag("Winner", formatCompetitor(winner, "winner")),
-    formatTag("TotalShots", assertNumber(totalShots, "total_shots")),
-    formatTag("ShotsLeft", assertNumber(pick(game, ["shots_left", "shotsLeft"]), "shots_left")),
-    formatTag("MovesCount", assertNumber(movesCount, "moves_count")),
-    formatTag("Duration", assertNumber(duration, "duration")),
+    formatOptionalNumberTag("TotalShots", totalShots, "total_shots"),
+    formatOptionalNumberTag(
+      "ShotsLeft",
+      pick(game, ["metadata.shots_left", "shots_left", "shotsLeft"]),
+      "shots_left",
+    ),
+    formatOptionalNumberTag("MovesCount", movesCount, "moves_count"),
+    formatOptionalNumberTag("Duration", duration, "duration"),
     "",
     ...players.map((player) => formatTag("Player", formatPlayer(player))),
     ...renderBoard(game, game_mode),
-  ].join("\n");
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 }
 
 async function writeLine(stream, line) {
