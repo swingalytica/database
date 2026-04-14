@@ -36,7 +36,7 @@ import Layout from '../layouts/Layout.astro';
 	</section>
 
 	<section class="panel">
-		<div class="section-heading">
+		<div class="section-heading flex-col">
 			<h2>Monthly dumps</h2>
 			<p class="status" data-status>Loading dump list…</p>
 		</div>
@@ -57,15 +57,15 @@ import Layout from '../layouts/Layout.astro';
 	const status = document.querySelector('[data-status]');
 	const dumpList = document.querySelector('[data-dump-list]');
 	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-	function setStatus(message) {
+	function setStatus(message: string) {
 		if (status instanceof HTMLElement) {
 			status.textContent = message;
 		}
 	}
 
-	function formatBytesAsMB(sizeInBytes) {
+	function formatBytesAsMB(sizeInBytes: number): string {
 		if (!Number.isFinite(sizeInBytes)) {
 			return 'Unknown size';
 		}
@@ -73,7 +73,7 @@ import Layout from '../layouts/Layout.astro';
 		return `${(sizeInBytes / 1024 / 1024).toFixed(2)} MB`;
 	}
 
-	function createDumpItem(file, downloadUrl) {
+	function createDumpItem(file: { name: string; metadata?: { size?: number }; size?: number }, downloadUrl: string): HTMLLIElement {
 		const item = document.createElement('li');
 		item.className = 'dump-list__item';
 
@@ -83,7 +83,7 @@ import Layout from '../layouts/Layout.astro';
 		const meta = document.createElement('span');
 		const sizeInBytes = file.metadata?.size ?? file.size;
 		meta.className = 'dump-list__meta';
-		meta.textContent = formatBytesAsMB(sizeInBytes);
+		meta.textContent = formatBytesAsMB(sizeInBytes ?? NaN);
 
 		const link = document.createElement('a');
 		link.href = downloadUrl;
@@ -127,7 +127,13 @@ import Layout from '../layouts/Layout.astro';
 				data: { publicUrl },
 			} = supabase.storage.from('dumps').getPublicUrl(file.name);
 
-			dumpList.append(createDumpItem(file, publicUrl));
+			// Ensure metadata is undefined if null to match expected type
+			const safeFile = {
+				...file,
+				metadata: file.metadata === null ? undefined : file.metadata,
+			};
+
+			dumpList.append(createDumpItem(safeFile, publicUrl));
 		}
 
 		setStatus(`${files.length} file${files.length === 1 ? '' : 's'} available`);
