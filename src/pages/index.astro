@@ -2,6 +2,47 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
+<script>
+	import { createClient } from "@supabase/supabase-js";
+
+	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+	const supabasePubKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+	const supabase = createClient(supabaseUrl, supabasePubKey);
+
+	const {data, error} = await supabase.storage.from("dumps").list("", {
+		limit: 1000,
+		sortBy: { column: "name", order: "desc" },
+	});
+
+	if (error) {
+		console.error("Error fetching dump list:", error);
+		const statusEl = document.querySelector("[data-status]");
+		if (statusEl) {
+			statusEl.textContent = "Error loading dump list.";
+		}
+	} else {
+		const dumpListEl = document.querySelector("[data-dump-list]");
+		if (dumpListEl) {
+			data.filter(file => !file.name.startsWith(".")).forEach((file) => {
+				const listItem = document.createElement("li");
+				const link = document.createElement("a");
+
+				const {data: url_data} = supabase.storage.from("dumps").getPublicUrl(file.name);
+
+				link.href = url_data.publicUrl;
+				link.textContent = file.name;
+				listItem.appendChild(link);
+				dumpListEl.appendChild(listItem);
+			});
+			const statusEl = document.querySelector("[data-status]");
+			if (statusEl) {
+				statusEl.remove();
+			}
+		}
+	}
+</script>
+
 <Layout
 	title="RealGolf.Games Database"
 	description="Monthly GGN dumps of all public RealGolf.Games games."
@@ -50,96 +91,3 @@ import Layout from '../layouts/Layout.astro';
 		Data by RealGolf.Games UG (haftungsbeschränkt) · CC BY 4.0 · Format: GGN
 	</footer>
 </Layout>
-
-<script>
-	import { createClient } from '@supabase/supabase-js';
-
-	const status = document.querySelector('[data-status]');
-	const dumpList = document.querySelector('[data-dump-list]');
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-	function setStatus(message: string) {
-		if (status instanceof HTMLElement) {
-			status.textContent = message;
-		}
-	}
-
-	function formatBytesAsMB(sizeInBytes: number): string {
-		if (!Number.isFinite(sizeInBytes)) {
-			return 'Unknown size';
-		}
-
-		return `${(sizeInBytes / 1024 / 1024).toFixed(2)} MB`;
-	}
-
-	function createDumpItem(file: { name: string; metadata?: { size?: number }; size?: number }, downloadUrl: string): HTMLLIElement {
-		const item = document.createElement('li');
-		item.className = 'dump-list__item';
-
-		const name = document.createElement('code');
-		name.textContent = file.name;
-
-		const meta = document.createElement('span');
-		const sizeInBytes = file.metadata?.size ?? file.size;
-		meta.className = 'dump-list__meta';
-		meta.textContent = formatBytesAsMB(sizeInBytes ?? NaN);
-
-		const link = document.createElement('a');
-		link.href = downloadUrl;
-		link.textContent = 'Download';
-		link.setAttribute('download', file.name);
-
-		const details = document.createElement('div');
-		details.className = 'dump-list__details';
-		details.append(name, meta);
-
-		item.append(details, link);
-		return item;
-	}
-
-	async function loadDumps() {
-		if (!(dumpList instanceof HTMLUListElement) || !supabaseUrl || !supabaseAnonKey) {
-			setStatus('Supabase credentials are not configured.');
-			return;
-		}
-
-		const supabase = createClient(supabaseUrl, supabaseAnonKey);
-		const { data, error } = await supabase.storage.from('dumps').list('', {
-			limit: 1000,
-			sortBy: { column: 'name', order: 'desc' },
-		});
-
-		if (error) {
-			setStatus('Could not load dumps right now.');
-			return;
-		}
-
-		const files = (data ?? []).filter((file) => file.name && !file.name.endsWith('/'));
-
-		if (files.length === 0) {
-			setStatus('No dumps available yet.');
-			return;
-		}
-
-		for (const file of files) {
-			const {
-				data: { publicUrl },
-			} = supabase.storage.from('dumps').getPublicUrl(file.name);
-
-			// Ensure metadata is undefined if null to match expected type
-			const safeFile = {
-				...file,
-				metadata: file.metadata === null ? undefined : file.metadata,
-			};
-
-			dumpList.append(createDumpItem(safeFile, publicUrl));
-		}
-
-		setStatus(`${files.length} file${files.length === 1 ? '' : 's'} available`);
-	}
-
-	loadDumps().catch(() => {
-		setStatus('Could not load dumps right now.');
-	});
-</script>

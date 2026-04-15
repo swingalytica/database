@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "@realgolfgames/database",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -9,8 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro",
-    "dump:publish": "node ./scripts/publish-monthly-dump.mjs"
+    "astro": "astro"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.103.0",
